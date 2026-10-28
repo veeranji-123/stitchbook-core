@@ -188,3 +188,20 @@ CREATE TABLE IF NOT EXISTS booking_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_booking_items_booking_id ON booking_items(booking_id);
+
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS stitching_speed_id TEXT REFERENCES tailor_stitching_speeds(id) ON DELETE SET NULL;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS ironing_service_type_id TEXT REFERENCES ironing_service_types(id) ON DELETE SET NULL;
+
+CREATE TABLE IF NOT EXISTS booking_ironing_items (
+  id TEXT PRIMARY KEY,
+  booking_id TEXT NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+  service_type_id TEXT REFERENCES ironing_service_types(id) ON DELETE SET NULL,
+  service_type_name TEXT NOT NULL,
+  quantity INTEGER NOT NULL DEFAULT 1,
+  price_per_item DOUBLE PRECISION NOT NULL DEFAULT 0,
+  customer_note TEXT,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_booking_ironing_items_booking_id ON booking_ironing_items(booking_id);

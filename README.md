@@ -1,6 +1,6 @@
 # stitchbook-core
 
-Backend service for StitchBook accounts, shops, ratings, and slots.
+Backend service for StitchBook accounts, shops, bookings, ratings, and slots.
 
 The Flutter app and `backend/server.js` in `stitchbook_app` stay as they are. This service is the new backend. It listens on port **3001**.
 
@@ -8,6 +8,7 @@ The Flutter app and `backend/server.js` in `stitchbook_app` stay as they are. Th
 
 - Customer and tailor registration and login
 - Shop list and shop details (`tailor` and `iron` shops together)
+- Booking create, status, notes, and tailor payment-status updates
 - Ratings and appointment slots
 - PostgreSQL tables for users, shops, bookings, measurements, and messages
 
@@ -18,7 +19,7 @@ The Flutter app and `backend/server.js` in `stitchbook_app` stay as they are. Th
 - Super admin: `stitchbook-admin`
 - Public entry point: `stitchbook-gateway`
 
-Booking create and status updates are the next routes to move into this service. Payment capture stays in `stitchbook-payments`.
+Online payment capture stays in `stitchbook-payments`. Booking notifications stay in `stitchbook-notifications`.
 
 ## Run
 

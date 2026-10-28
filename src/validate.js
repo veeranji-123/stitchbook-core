@@ -22,4 +22,8 @@ function safeName(value) {
   return typeof value === 'string' && value.trim().length >= 1 && value.trim().length <= 100;
 }
 
-module.exports = { validateEmail, validatePhone, validatePassword, validateId, safeName };
+function safeText(value, max = 2000) {
+  return typeof value === 'string' && value.trim().length > 0 && value.length <= max;
+}
+
+module.exports = { validateEmail, validatePhone, validatePassword, validateId, safeName, safeText };
