@@ -5,6 +5,7 @@ const { authenticateToken } = require('../middleware/auth');
 const { rateLimit } = require('../middleware/rateLimit');
 const { validateId, validatePhone, safeName, safeText } = require('../validate');
 const { parseWorkingHours, isWorkingDay, getWorkingHoursForDay, generateTimeSlots } = require('../schedule');
+const { notify } = require('../notify');
 const {
   VALID_STATUSES,
   VALID_PAYMENT_METHODS,
@@ -385,6 +386,7 @@ router.post('/', authenticateToken, bookingRateLimit, async (req, res) => {
     }
 
     await client.query('COMMIT');
+    await notify(booking.tailor_id, 'New Booking', `${booking.customer_name} booked ${booking.garment_type}`, booking.id);
     return res.json({ booking, ironingItems: createdIroningItems });
   } catch (e) {
     try { await client.query('ROLLBACK'); } catch (rollbackError) { /* transaction already closed */ }
@@ -435,6 +437,12 @@ router.put('/:id/status', authenticateToken, async (req, res) => {
         [status, tailorNotes || booking.tailor_notes, updatedAt, req.params.id]
       );
     }
+    await notify(
+      booking.customer_id || booking.customer_phone,
+      'Booking Updated',
+      `Your ${booking.garment_type} booking is now "${status}"`,
+      booking.id
+    );
     return res.json({ success: true });
   } catch (e) {
     return res.status(500).json({ error: 'Update failed' });
