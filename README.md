@@ -19,7 +19,7 @@ The Flutter app and `backend/server.js` in `stitchbook_app` stay as they are. Th
 - Super admin: `stitchbook-admin`
 - Public entry point: `stitchbook-gateway`
 
-Online payment capture stays in `stitchbook-payments`. Booking notifications stay in `stitchbook-notifications`.
+Online payment orders, verification, and Razorpay webhooks live in `stitchbook-payments`. Booking notifications stay in `stitchbook-notifications`.
 
 ## Run
 

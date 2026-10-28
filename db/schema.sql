@@ -191,6 +191,11 @@ CREATE INDEX IF NOT EXISTS idx_booking_items_booking_id ON booking_items(booking
 
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS stitching_speed_id TEXT REFERENCES tailor_stitching_speeds(id) ON DELETE SET NULL;
 ALTER TABLE bookings ADD COLUMN IF NOT EXISTS ironing_service_type_id TEXT REFERENCES ironing_service_types(id) ON DELETE SET NULL;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS razorpay_order_id TEXT;
+ALTER TABLE bookings ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT;
+
+CREATE INDEX IF NOT EXISTS idx_bookings_razorpay_order_id ON bookings(razorpay_order_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_razorpay_payment_id ON bookings(razorpay_payment_id);
 
 CREATE TABLE IF NOT EXISTS booking_ironing_items (
   id TEXT PRIMARY KEY,

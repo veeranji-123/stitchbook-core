@@ -8,6 +8,7 @@ const tailorRoutes = require('./routes/tailors');
 const ratingRoutes = require('./routes/ratings');
 const slotRoutes = require('./routes/slots');
 const bookingRoutes = require('./routes/bookings');
+const internalRoutes = require('./routes/internal');
 
 const app = express();
 
@@ -27,6 +28,7 @@ app.use('/api/tailors', tailorRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/slots', slotRoutes);
 app.use('/api/bookings', bookingRoutes);
+app.use('/internal', internalRoutes);
 
 initDb()
   .then(() => {
