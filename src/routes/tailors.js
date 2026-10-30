@@ -27,6 +27,19 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/:id/ironing-services', (req, res) => {
+  if (!validateId(req.params.id)) return res.status(400).json({ error: 'Invalid tailor ID' });
+  return pool.query('SELECT shop_type FROM tailors WHERE id = $1', [req.params.id])
+    .then((shop) => {
+      if (shop.rows.length === 0 || shop.rows[0].shop_type !== 'iron') return res.json({ services: [] });
+      return pool.query(
+        'SELECT * FROM ironing_service_types WHERE tailor_id = $1 AND is_enabled = 1 ORDER BY display_order, name',
+        [req.params.id]
+      ).then((result) => res.json({ services: result.rows }));
+    })
+    .catch(() => res.status(500).json({ error: 'Database error' }));
+});
+
 router.get('/:id', (req, res) => {
   if (!validateId(req.params.id)) return res.status(400).json({ error: 'Invalid tailor ID' });
   return pool.query(`SELECT ${PUBLIC_COLUMNS} FROM tailors WHERE id = $1`, [req.params.id])
