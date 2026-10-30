@@ -13,7 +13,11 @@ const shopScheduleRoutes = require('./routes/shopSchedule');
 const analyticsRoutes = require('./routes/analytics');
 const { userRouter, profileRouter, bookingRouter } = require('./routes/measurements');
 const favoriteRoutes = require('./routes/favorites');
+const uploadRoutes = require('./routes/uploads');
+const messageRoutes = require('./routes/messages');
+const { bookingRouter: ironingBookingRoutes, photoRouter: ironingPhotoRoutes } = require('./routes/ironingItems');
 const internalRoutes = require('./routes/internal');
+const { uploadsDir, ensureUploadsDir } = require('./files');
 
 const app = express();
 
@@ -27,15 +31,21 @@ app.use((req, res, next) => {
   next();
 });
 
+ensureUploadsDir();
+app.use('/uploads', express.static(uploadsDir, { index: false }));
 app.use(healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/tailors', tailorRoutes);
+app.use('/api/tailors', uploadRoutes);
+app.use('/api/messages', messageRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/slots', slotRoutes);
 app.use('/api/user', userRouter);
 app.use('/api/user', favoriteRoutes);
 app.use('/api/measurements', profileRouter);
 app.use('/api/bookings', bookingRouter);
+app.use('/api/bookings', ironingBookingRoutes);
+app.use('/api/ironing-photos', ironingPhotoRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tailor', shopCatalogRoutes);
 app.use('/api/tailor', shopScheduleRoutes);

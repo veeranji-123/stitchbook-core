@@ -210,3 +210,14 @@ CREATE TABLE IF NOT EXISTS booking_ironing_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_booking_ironing_items_booking_id ON booking_ironing_items(booking_id);
+
+CREATE TABLE IF NOT EXISTS ironing_item_photos (
+  id TEXT PRIMARY KEY,
+  ironing_item_id TEXT NOT NULL REFERENCES booking_ironing_items(id) ON DELETE CASCADE,
+  photo_url TEXT NOT NULL,
+  is_primary INTEGER DEFAULT 0,
+  display_order INTEGER DEFAULT 0,
+  created_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_ironing_item_photos_item_id ON ironing_item_photos(ironing_item_id);
