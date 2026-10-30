@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
-const { validateId } = require('../validate');
+const { authenticateToken, requireTailor } = require('../middleware/auth');
+const { validateId, validatePhone } = require('../validate');
 const { parseWorkingHours, isWorkingDay, getWorkingHoursForDay, generateTimeSlots } = require('../schedule');
 
 const router = express.Router();
@@ -96,6 +97,45 @@ router.get('/:id/ironing-services', (req, res) => {
       ).then((result) => res.json({ services: result.rows }));
     })
     .catch(() => res.status(500).json({ error: 'Database error' }));
+});
+
+router.put('/:id', authenticateToken, requireTailor, async (req, res) => {
+  try {
+    if (!validateId(req.params.id)) return res.status(400).json({ error: 'Invalid tailor ID' });
+    if (req.auth.id !== req.params.id) return res.status(403).json({ error: 'Cannot modify another tailor\'s profile' });
+    const allowed = ['name', 'phone', 'shopDescription', 'address', 'latitude', 'longitude', 'stitchingDays', 'garmentTypes', 'prices', 'itemPrices', 'estimatedHours', 'shopType', 'portfolioImages', 'offersPickupDrop', 'pickupRadiusKm', 'baseDeliveryCharge'];
+    const fields = [];
+    const values = [];
+    let index = 1;
+    for (const [key, raw] of Object.entries(req.body || {})) {
+      if (key === 'password' || key === 'id' || key === 'email') continue;
+      if (!allowed.includes(key)) continue;
+      const column = key.replace(/([A-Z])/g, '_$1').toLowerCase();
+      let value = typeof raw === 'object' && raw !== null ? JSON.stringify(raw) : raw;
+      if (key === 'phone' && !validatePhone(String(raw))) return res.status(400).json({ error: 'Invalid phone' });
+      if (key === 'shopType' && raw !== 'tailor' && raw !== 'iron') return res.status(400).json({ error: 'Shop type must be tailor or iron' });
+      if (key === 'offersPickupDrop') value = raw ? 1 : 0;
+      if (key === 'pickupRadiusKm') {
+        const radius = Number(raw);
+        if (!Number.isFinite(radius) || radius < 0 || radius > 100) return res.status(400).json({ error: 'Pickup radius must be 0-100 km' });
+        value = radius;
+      }
+      if (key === 'baseDeliveryCharge') {
+        const charge = Number(raw);
+        if (!Number.isFinite(charge) || charge < 0 || charge > 100000) return res.status(400).json({ error: 'Delivery charge must be 0-100000' });
+        value = charge;
+      }
+      fields.push(`${column}=$${index}`);
+      values.push(value);
+      index += 1;
+    }
+    if (fields.length === 0) return res.status(400).json({ error: 'No valid fields to update' });
+    values.push(req.params.id);
+    await pool.query(`UPDATE tailors SET ${fields.join(',')} WHERE id=$${index}`, values);
+    return res.json({ success: true });
+  } catch (e) {
+    return res.status(500).json({ error: 'Update failed' });
+  }
 });
 
 router.get('/:id', (req, res) => {

@@ -10,6 +10,7 @@ const slotRoutes = require('./routes/slots');
 const bookingRoutes = require('./routes/bookings');
 const shopCatalogRoutes = require('./routes/shopCatalog');
 const shopScheduleRoutes = require('./routes/shopSchedule');
+const analyticsRoutes = require('./routes/analytics');
 const internalRoutes = require('./routes/internal');
 
 const app = express();
@@ -32,6 +33,7 @@ app.use('/api/slots', slotRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tailor', shopCatalogRoutes);
 app.use('/api/tailor', shopScheduleRoutes);
+app.use('/api/analytics', analyticsRoutes);
 app.use('/internal', internalRoutes);
 
 initDb()
