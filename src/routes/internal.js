@@ -95,4 +95,53 @@ router.patch('/bookings/:id/payment', async (req, res) => {
   }
 });
 
+const SHOP_COLUMNS = `
+  id, name, phone, email, shop_description, address, latitude, longitude,
+  average_rating, total_ratings, shop_type, is_active, profile_image_url
+`;
+
+router.get('/admin/summary', async (req, res) => {
+  try {
+    const [users, shops, activeShops, bookings] = await Promise.all([
+      pool.query('SELECT COUNT(*) FROM users'),
+      pool.query('SELECT COUNT(*) FROM tailors'),
+      pool.query('SELECT COUNT(*) FROM tailors WHERE is_active = 1'),
+      pool.query('SELECT COUNT(*) FROM bookings'),
+    ]);
+    return res.json({
+      users: parseInt(users.rows[0].count, 10),
+      shops: parseInt(shops.rows[0].count, 10),
+      activeShops: parseInt(activeShops.rows[0].count, 10),
+      bookings: parseInt(bookings.rows[0].count, 10),
+    });
+  } catch (e) {
+    return res.status(500).json({ error: 'Database error' });
+  }
+});
+
+router.get('/admin/shops', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT ${SHOP_COLUMNS} FROM tailors ORDER BY name`);
+    return res.json({ shops: result.rows });
+  } catch (e) {
+    return res.status(500).json({ error: 'Database error' });
+  }
+});
+
+router.patch('/admin/shops/:id/active', async (req, res) => {
+  try {
+    if (!validateId(req.params.id)) return res.status(400).json({ error: 'Invalid shop ID' });
+    const isActive = req.body.isActive;
+    if (isActive !== 0 && isActive !== 1) return res.status(400).json({ error: 'isActive must be 0 or 1' });
+    const result = await pool.query(
+      `UPDATE tailors SET is_active = $1 WHERE id = $2 RETURNING ${SHOP_COLUMNS}`,
+      [isActive, req.params.id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Shop not found' });
+    return res.json({ shop: result.rows[0] });
+  } catch (e) {
+    return res.status(500).json({ error: 'Update failed' });
+  }
+});
+
 module.exports = router;
