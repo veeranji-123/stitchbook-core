@@ -1,4 +1,20 @@
 const VALID_DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const TIME_RE = /^([01]\d|2[0-3]):([0-5]\d)$/;
+
+function validateWorkingHours(hours) {
+  if (!hours || typeof hours !== 'object') return false;
+  for (const day of Object.keys(hours)) {
+    if (!VALID_DAYS.includes(day)) return false;
+    const entry = hours[day];
+    if (typeof entry !== 'object') return false;
+    if (entry.enabled === true) {
+      if (!entry.open || !entry.close) return false;
+      if (!TIME_RE.test(entry.open) || !TIME_RE.test(entry.close)) return false;
+      if (entry.open >= entry.close) return false;
+    }
+  }
+  return true;
+}
 
 function getDefaultWorkingHours() {
   const hours = {};
@@ -50,4 +66,4 @@ function generateTimeSlots(openTime, closeTime, durationMinutes) {
   return slots;
 }
 
-module.exports = { parseWorkingHours, isWorkingDay, getWorkingHoursForDay, generateTimeSlots };
+module.exports = { parseWorkingHours, validateWorkingHours, isWorkingDay, getWorkingHoursForDay, generateTimeSlots };

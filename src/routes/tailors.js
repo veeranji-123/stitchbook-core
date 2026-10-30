@@ -1,6 +1,7 @@
 const express = require('express');
 const { pool } = require('../db');
 const { validateId } = require('../validate');
+const { parseWorkingHours, isWorkingDay, getWorkingHoursForDay, generateTimeSlots } = require('../schedule');
 
 const router = express.Router();
 
@@ -22,6 +23,50 @@ router.get('/', async (req, res) => {
     }
     const result = await pool.query(query, params);
     return res.json({ tailors: result.rows });
+  } catch (e) {
+    return res.status(500).json({ error: 'Database error' });
+  }
+});
+
+router.get('/:id/availability', async (req, res) => {
+  try {
+    if (!validateId(req.params.id)) return res.status(400).json({ error: 'Invalid tailor ID' });
+    const { date } = req.query;
+    if (!date || typeof date !== 'string') return res.status(400).json({ error: 'Date query parameter required (YYYY-MM-DD)' });
+    const dateStr = date.slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return res.status(400).json({ error: 'Invalid date format' });
+    const tailorCheck = await pool.query('SELECT id, working_hours, slot_duration FROM tailors WHERE id = $1', [req.params.id]);
+    if (tailorCheck.rows.length === 0) return res.status(404).json({ error: 'Tailor not found' });
+    const tailor = tailorCheck.rows[0];
+    const workingHours = parseWorkingHours(tailor.working_hours);
+    if (!isWorkingDay(workingHours, dateStr)) {
+      return res.json({ date: dateStr, tailorId: req.params.id, slots: [], closed: true });
+    }
+    const dayHours = getWorkingHoursForDay(workingHours, dateStr);
+    const duration = tailor.slot_duration || 60;
+    const generatedSlots = (dayHours && dayHours.enabled)
+      ? generateTimeSlots(dayHours.open, dayHours.close, duration)
+      : ['10:00 AM', '11:30 AM', '2:00 PM', '4:00 PM', '5:30 PM'];
+    const result = await pool.query(
+      'SELECT time_slot, max_customers, booked_customers, is_blocked FROM slots WHERE tailor_id = $1 AND date = $2',
+      [req.params.id, dateStr]
+    );
+    const existingSlots = new Map(result.rows.map((row) => [row.time_slot, row]));
+    const hasFullDayBlock = result.rows.some((row) => row.is_blocked && row.time_slot === '10:00 AM' && row.booked_customers === 0);
+    const availability = generatedSlots.map((slot) => {
+      const existing = existingSlots.get(slot);
+      if (existing) {
+        return {
+          slot,
+          available: !existing.is_blocked && existing.booked_customers < existing.max_customers,
+          remaining: Math.max(0, existing.max_customers - existing.booked_customers),
+          blocked: !!existing.is_blocked,
+        };
+      }
+      if (hasFullDayBlock) return { slot, available: false, remaining: 0, blocked: true };
+      return { slot, available: true, remaining: 3, blocked: false };
+    });
+    return res.json({ date: dateStr, tailorId: req.params.id, slots: availability, closed: false });
   } catch (e) {
     return res.status(500).json({ error: 'Database error' });
   }
