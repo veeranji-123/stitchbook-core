@@ -11,6 +11,7 @@ const bookingRoutes = require('./routes/bookings');
 const shopCatalogRoutes = require('./routes/shopCatalog');
 const shopScheduleRoutes = require('./routes/shopSchedule');
 const analyticsRoutes = require('./routes/analytics');
+const { userRouter, profileRouter, bookingRouter } = require('./routes/measurements');
 const internalRoutes = require('./routes/internal');
 
 const app = express();
@@ -30,6 +31,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tailors', tailorRoutes);
 app.use('/api/ratings', ratingRoutes);
 app.use('/api/slots', slotRoutes);
+app.use('/api/user', userRouter);
+app.use('/api/measurements', profileRouter);
+app.use('/api/bookings', bookingRouter);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/tailor', shopCatalogRoutes);
 app.use('/api/tailor', shopScheduleRoutes);
